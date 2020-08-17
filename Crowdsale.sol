@@ -1,40 +1,51 @@
 pragma solidity ^0.5.0;
 
-import "./PupperCoin.sol";
+import "./ShareCoin.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/crowdsale/Crowdsale.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/crowdsale/emission/MintedCrowdsale.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/crowdsale/validation/CappedCrowdsale.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/crowdsale/validation/TimedCrowdsale.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/crowdsale/distribution/RefundablePostDeliveryCrowdsale.sol";
 
-// @TODO: Inherit the crowdsale contracts
-contract PupperCoinSale is {
+// Inherit the crowdsale contracts
+contract ShareCoinSale is Crowdsale, MintedCrowdsale, CappedCrowdsale, TimedCrowdsale, RefundablePostDeliveryCrowdsale {
 
     constructor(
-        // @TODO: Fill in the constructor parameters!
+        uint rate,
+        address payable wallet, // sale beneficiary
+        ShareCoin token, // the ShareCoin token itself that the contract will work with
+        uint goal, //the minimum goal
+        uint openingTime,
+        uint closingTime
     )
-        // @TODO: Pass the constructor parameters to the crowdsale contracts.
+        Crowdsale (rate, wallet, token)
         public
     {
         // constructor can stay empty
     }
 }
 
-contract PupperCoinSaleDeployer {
+contract ShareCoinSaleDeployer {
 
-    address public token_sale_address;
-    address public token_address;
+    address public token_sale_address; // will store ShareCoinSale's address once deployed
+    address public token_address; // will store ShareCoin's address once deployed
 
     constructor(
-        // @TODO: Fill in the constructor parameters!
+        string memory name,
+        string memory symbol,
+        address payable wallet // this address will receive all Ether raised by the sale
     )
         public
     {
-        // @TODO: create the PupperCoin and keep its address handy
+        // Create the ShareCoin and keep its address handy
+        ShareCoin token = new ShareCoin(name, symbol, 0); // create token with name, symbol, and initial supply
+        token_address = address(token); // allows us to easily fetch the token address
 
-        // @TODO: create the PupperCoinSale and tell it about the token, set the goal, and set the open and close times to now and now + 24 weeks.
+        // Create the ShareCoinSale and tell it about the token, set the goal, and set the open and close times to now and now + 24 weeks.
+        ShareCoinSale token_sale = new ShareCoinSale(1, wallet, token, goal, now, now + 24 weeks); 
+        token_sale_address = address(token_sale); 
 
-        // make the PupperCoinSale contract a minter, then have the PupperCoinSaleDeployer renounce its minter role
+        // Make the ShareCoinSale contract a minter, then have the ShareCoinSaleDeployer renounce its minter role
         token.addMinter(token_sale_address);
         token.renounceMinter();
     }
